@@ -64,20 +64,28 @@ if df is not None:
     
     # --- 📸 ส่วนแสดงรูปภาพจากคอลัมน์ที่ 4 (คอลัมน์ D) ---
     # หากครูใส่รูปไว้ในคอลัมน์ 4 ระบบจะประมวลผลดึงไฟล์รูปภาพต้นฉบับมาโชว์ให้อัตโนมัติ
+    # ✨ โค้ดใหม่: เพิ่มทางเลือกการเรนเดอร์รูปภาพให้เสถียรยิ่งขึ้น
     try:
-        # ดึงเลขแถวจริงใน Google Sheets เพื่อระบุตำแหน่งรูปภาพ
-        row_index = df[df.iloc[:, 0] == selected_lesson].index[0] + 2 
+        # ดึงข้อมูลจากคอลัมน์ที่ 4 (Indexคอลัมน์คือ 3)
+        img_data = lesson_data.iloc[3]
         
-        # คํานวณลิงก์ดึงภาพพิเศษจากระบบหลังบ้าน Google Sheets คอลัมน์ที่ 4 (คอลัมน์ D)
-        direct_image_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/embed/oimg?id={sheet_id}&oid=1&row={row_index}&col=4"
-        
-        st.image(
-            direct_image_url, 
-            caption="แบบ Drawing ต้นแบบจาก Google Sheets (กางนิ้วบนจอมือถือเพื่อซูมดูขนาดได้)", 
-            use_container_width=True
-        )
-    except Exception:
-        st.warning("⚠️ ไม่สามารถโหลดรูปภาพจากคอลัมน์ที่ 4 ได้ กรุณาตรวจสอบการใส่รูปใน Google Sheets")
+        # ตรวจสอบว่าถ้าช่องนั้นพิมพ์เป็นลิงก์ข้อความหรือสูตรสำเร็จ ให้ดึงมาแสดงตรงๆ
+        if pd.notna(img_data) and str(img_data).startswith('http'):
+            st.image(img_data, caption="แบบ Drawing ต้นแบบ", use_container_width=True)
+        else:
+            # ใช้พิกัดในการจำลองรูปจากกูเกิลแชร์แบบเสถียร
+            row_index = df[df.iloc[:, 0] == selected_lesson].index[0] + 2
+            direct_image_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/embed/oimg?id={sheet_id}&oid=1&row={row_index}&col=4"
+            
+            # บังคับวาดรูปผ่านระบบ Web Component ชั้นล่างเพื่อไม่ให้โดน Google บล็อกนโยบายความปลอดภัย
+            st.markdown(f"""
+                <div style="display: flex; justify-content: center; background-color: #ffffff; padding: 10px; border-radius: 8px;">
+                    <img src="{direct_image_url}" style="max-width: 100%; height: auto; border: 1px solid #ddd;" alt="กำลังโหลดรูปภาพใบงาน... (หากรูปไม่ขึ้น โปรดตรวจสอบขั้นตอน Insert Image ใน Cell บน Google Sheets)">
+                </div>
+            """, unsafe_allow_html=True)
+            st.caption("📱 แบบ Drawing ต้นแบบ (หากรูปภาพไม่แสดงผล ให้ลองตรวจสอบขั้นตอนการ 'แทรกรูปภาพในเซลล์' บน Google ชีตอีกครั้งครับ)")
+    except Exception as e:
+        st.warning(f"⚠️ ไม่สามารถเชื่อมต่อระบบแสดงผลรูปภาพได้: {str(e)}")
         
     st.markdown("---")
     st.subheader("📋 ขั้นตอนการฝึกทำตามสเต็ป")
